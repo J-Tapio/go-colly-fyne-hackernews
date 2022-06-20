@@ -8,7 +8,7 @@ Currently app updates latest news from the main site every 30 minutes. Might als
 
 ### Demo
 
-![Demo of the app](https://ik.imagekit.io/htg3gsxgz/HackerNews_app/go-colly-hackernews_j1d7wrkjm.gif?ik-sdk-version=javascript-1.4.3&updatedAt=1655723075261)
+![App in action](./go-colly-hackernews.gif)
 
 ### Todo
 
