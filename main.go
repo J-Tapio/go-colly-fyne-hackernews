@@ -17,12 +17,12 @@ import (
 )
 
 type newsStory struct {
-	storyURL string
-	storyImg string
-	storyTitle string
-	storyDate string
-	storyAuthor string
-	storyCaption string
+	URL string
+	Img string
+	Title string
+	Date string
+	Author string
+	Caption string
 }
 
 
@@ -54,8 +54,9 @@ func init() {
 
 
 func main() {
-	scrapeError = false
+	
 	go func() {
+		scrapeError = false
 		// Resource to scrape
 		hackerNewsURL := "https://thehackernews.com"
 		// Channels
@@ -157,14 +158,14 @@ func scrapeNews(url string, c chan<- newsStory) {
 		storyDateNode := e.ChildText(".item-label")
 		storyAuthorNode := e.ChildText(".item-label span")
 		// News story
-		story.storyURL = e.ChildAttr(".story-link", "href")
-		story.storyImg = e.ChildAttr(".img-ratio img", "data-src")
-		story.storyTitle = e.ChildText(".home-title")
+		story.URL = e.ChildAttr(".story-link", "href")
+		story.Img = e.ChildAttr(".img-ratio img", "data-src")
+		story.Title = e.ChildText(".home-title")
 		// Remove the icon and return text
-		story.storyDate = storyDateNode[3:16]
+		story.Date = storyDateNode[3:16]
 		// Remove the icon and return text
-		story.storyAuthor = storyAuthorNode[3:]
-		story.storyCaption = e.ChildText(".home-desc")
+		story.Author = storyAuthorNode[3:]
+		story.Caption = e.ChildText(".home-desc")
 
 		c <-story
 	})
@@ -201,30 +202,29 @@ func createNewsStoryNodes(news []newsStory) []fyne.CanvasObject {
 	for _, story := range newsStories {
 
 		// Story image
-		img, _ := fyne.LoadResourceFromURLString(story.storyImg)
+		img, _ := fyne.LoadResourceFromURLString(story.Img)
 		storyImg := canvas.NewImageFromResource(img)
 		storyImg.FillMode = canvas.ImageFillContain
 		storyImg.Translucency = 0.8
 
 		// Story title
-		title := canvas.NewText(story.storyTitle, color.White)
+		title := canvas.NewText(story.Title, color.White)
 		title.Alignment = fyne.TextAlignCenter
 		title.TextStyle.Bold = true
 
 		// Story date & author
-		dateAndAuthorText := strings.Join([]string{story.storyAuthor, "-", story.storyDate}, " ")
+		dateAndAuthorText := strings.Join([]string{story.Author, "-", story.Date}, " ")
 		dateAndAuthor := canvas.NewText(dateAndAuthorText, color.White)
 		dateAndAuthor.Alignment = fyne.TextAlignCenter
 
 		// Story link button
-		storyURL := story.storyURL
+		storyURL := story.URL
 		storyLinkBtn := widget.NewButtonWithIcon(
 			"Read the article", 
 			hnImg, 
 			func() {
 			browser.OpenURL(storyURL)
 		})
-		//storyLinkBtn.Alignment = widget.ButtonAlignCenter
 		storyLinkBtn.Importance = widget.MediumImportance
 
 		// Create card-like layout and insert elements
