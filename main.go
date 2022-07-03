@@ -1,9 +1,9 @@
 package main
 
 import (
-	"strings"
-	"log"
 	"image/color"
+	"log"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -17,17 +17,17 @@ import (
 )
 
 type newsStory struct {
-	URL string
-	Img string
-	Title string
-	Date string
-	Author string
+	URL     string
+	Img     string
+	Title   string
+	Date    string
+	Author  string
 	Caption string
 }
 
-
 // Scraped news
 var newsStories []newsStory
+
 // News elements
 var latestNews []fyne.CanvasObject
 
@@ -52,40 +52,40 @@ func init() {
 	appWindow.Resize(fyne.NewSize(400, 800))
 }
 
-
 func main() {
-	
 	go func() {
-		scrapeError = false
-		// Resource to scrape
-		hackerNewsURL := "https://thehackernews.com"
-		// Channels
-		log.Println("Fetching latest stories")
-		fromHN := make(chan newsStory, 7)
-		toList := make(chan newsStory, 7)
+		for {
+			scrapeError = false
+			// Resource to scrape
+			hackerNewsURL := "https://thehackernews.com"
+			// Channels
+			log.Println("Fetching latest stories")
+			fromHN := make(chan newsStory, 7)
+			toList := make(chan newsStory, 7)
 	
-		go scrapeNews(hackerNewsURL, fromHN)
-		go outputToStories(toList)
-
-		hnOpen := true
-		for hnOpen {
-			story, open := <-fromHN
-			if open {
-				toList <-story
-			} else {
-				hnOpen = false
+			go scrapeNews(hackerNewsURL, fromHN)
+			go outputToStories(toList)
+	
+			hnOpen := true
+			for hnOpen {
+				story, open := <-fromHN
+				if open {
+					toList <- story
+				} else {
+					hnOpen = false
+				}
 			}
+	
+			if !scrapeError {
+				log.Println("Done fetching new stories")
+				createNewsFeedView()
+			} else {
+				log.Println("Couldn't fetch the latest news")
+				createErrorView()
+			}
+	
+			time.Sleep(30 * time.Minute)
 		}
-
-		if !scrapeError {
-			log.Println("Done fetching new stories")
-			createNewsFeedView()
-		} else {
-			log.Println("Couldn't fetch the latest news")
-			createErrorView()
-		}
-
-		time.Sleep(30 * time.Minute)
 	}()
 
 	appWindow.ShowAndRun()
@@ -111,7 +111,7 @@ func createErrorView() {
 	hnImageElement.FillMode = canvas.ImageFillContain
 	hnImageElement.SetMinSize(fyne.NewSize(50, 50))
 
-	errorContent := container.NewVBox(layout.NewSpacer(),hnImageElement, errorTitleEl, tryAgainTextEl, layout.NewSpacer())
+	errorContent := container.NewVBox(layout.NewSpacer(), hnImageElement, errorTitleEl, tryAgainTextEl, layout.NewSpacer())
 
 	appWindow.SetContent(errorContent)
 	appWindow.Canvas().Refresh(errorContent)
@@ -127,9 +127,9 @@ func createNewsFeedView() {
 	appWindow.Canvas().Refresh(content)
 }
 
-func outputToStories(c <- chan newsStory) {
+func outputToStories(c <-chan newsStory) {
 	for {
-		story := <- c
+		story := <-c
 		newsStories = append(newsStories, story)
 	}
 }
@@ -143,7 +143,7 @@ func scrapeNews(url string, c chan<- newsStory) {
 
 	collector.OnError(func(_ *colly.Response, err error) {
 		//? Maybe use log.fatal -> SIGINT(1) etc?
-    log.Println("Something went wrong:", err)
+		log.Println("Something went wrong:", err)
 		scrapeError = true
 		close(c)
 	})
@@ -167,7 +167,7 @@ func scrapeNews(url string, c chan<- newsStory) {
 		story.Author = storyAuthorNode[3:]
 		story.Caption = e.ChildText(".home-desc")
 
-		c <-story
+		c <- story
 	})
 
 	collector.OnScraped(func(r *colly.Response) {
@@ -177,7 +177,6 @@ func scrapeNews(url string, c chan<- newsStory) {
 
 	collector.Visit(url)
 }
-
 
 func createNewsStoryNodes(news []newsStory) []fyne.CanvasObject {
 	newsNodes := []fyne.CanvasObject{}
@@ -220,11 +219,11 @@ func createNewsStoryNodes(news []newsStory) []fyne.CanvasObject {
 		// Story link button
 		storyURL := story.URL
 		storyLinkBtn := widget.NewButtonWithIcon(
-			"Read the article", 
-			hnImg, 
+			"Read the article",
+			hnImg,
 			func() {
-			browser.OpenURL(storyURL)
-		})
+				browser.OpenURL(storyURL)
+			})
 		storyLinkBtn.Importance = widget.MediumImportance
 
 		// Create card-like layout and insert elements
